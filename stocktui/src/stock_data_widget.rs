@@ -1,5 +1,6 @@
-use ratatui::widgets::{block, Borders, Paragraph, Widget};
-use crate::stock_data::StockData; // Adjust this import
+pub mod stock_data_widget { 
+    use ratatui::widgets::{Block, Borders, Paragraph, Widget};
+    use stock_data::StockData;
 
 pub struct StockDataWidget<'a> {
     stock_data: &'a StockData,
@@ -11,11 +12,10 @@ impl<'a> StockDataWidget<'a> {
     }
 }
 
-type Type = ratatui::layout::Rect;
-
 impl<'a> Widget for StockDataWidget<'a> {
-    fn render(self, area: Type, buf: &mut ratatui::buffer::Buffer) {
-        let block = block::default().title("Stock Data").borders(Borders::ALL);
+    fn render(self, area: ratatui::layout::Rect, buf: &mut ratatui::buffer::Buffer) {
+        let block = Block::default().title("Stock Data").borders(Borders::ALL);
+
         let ohlc = if let Some(last_ohlc) = self.stock_data.ohlc.last() {
             format!(
                 "Open: {}\nHigh: {}\nLow: {}\nClose: {}",
@@ -24,17 +24,21 @@ impl<'a> Widget for StockDataWidget<'a> {
         } else {
             "No OHLC data available".to_string()
         };
+
         let volume = if let Some(last_volume) = self.stock_data.volume.last() {
             format!("Volume: {}", last_volume)
         } else {
             "No volume data available".to_string()
         };
+
         let paragraph = Paragraph::new(format!(
             "Symbol: {}\n{}\n{}",
             self.stock_data.symbol, ohlc, volume
         ))
         .block(block)
-        .alignment(tui::layout::Alignment::Center);
+        .alignment(ratatui::layout::Alignment::Center);
+
         paragraph.render(area, buf);
     }
+}
 }
