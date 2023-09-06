@@ -1,37 +1,34 @@
-use crate::stock_data_widget::stock_data_widget::StockDataWidget;;
-mod stock_data_widget;
-use crate::stock_data_;
-// ...
 
+
+use std::env;
+use std::error::Error;
+pub mod async_data;
+pub mod historical;
+use cli_candlestick_chart::Chart;
 #[tokio::main]
-async fn main() {
-    // Create a new StockData instance
-    let symbol = "AAPL"; // Replace with the desired stock symbol
-    let stock_data = StockData::new(&symbol).await.unwrap();
 
-    // Create a new CrosstermBackend instance
-    let backend = CrosstermBackend;
-
-    // Create a new StockDataWithBackend instance
-    let stock_data_with_backend = StockDataWithBackend {
-        stock_data,
-        backend,
-    };
-
-    // Create a new Ratatui terminal
-    let mut terminal = ratatui::Terminal::new(stock_data_with_backend).unwrap();
-
-    // ...
-
-    // Enter the rendering loop
-    loop {
-        // Clear the terminal and render the StockDataWidget
-        terminal.clear().unwrap();
-        terminal.draw(|f| {
-            stock_data_widget.clear_and_render(f.size(), f.buf);
-        }).unwrap();
-
-        // Fetch data and render every 60 seconds
-        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+async fn main() -> Result<(), Box<dyn Error>> {
+    // Parse command-line arguments for ticker symbol and timeframe
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3 {
+        eprintln!("Usage: {} <ticker> <timeframe>", args[0]);
+        std::process::exit(1);
     }
+    let ticker = &args[1];
+    let timeframe = &args[2];
+
+    // Fetch historical data and get the candles
+    let candles = historical::historical::fetch_data(ticker, timeframe);
+
+    // Create and display the chart
+    let mut chart = Chart::new(&candles);
+    chart.set_bear_color(0, 0, 139); // Dark Blue: RGB(0, 0, 139)
+    chart.set_bull_color(255, 255, 255); // White
+    chart.set_name(String::from(ticker)); // Set your desired chart name
+    chart.set_vol_bear_color(0, 0, 139);
+    chart.set_vol_bull_color(255, 255, 255);
+    chart.set_volume_pane_height(4);
+    chart.draw();
+
+    Ok(())
 }
